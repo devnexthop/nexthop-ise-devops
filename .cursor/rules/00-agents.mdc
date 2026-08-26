@@ -1,0 +1,12 @@
+---
+description: ISE tooling rules. Read AGENTS.md first.
+alwaysApply: true
+---
+
+# Read AGENTS.md first
+
+`customer_config.py` is gitignored and holds real ISE hostnames and credentials - start
+from `customer_config_example.py`. Never commit real hostnames or passwords.
+
+This source was unversioned until 2026-08-26 and existed in one place only. Commit and
+push; untracked is not backed up.
