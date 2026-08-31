@@ -1,194 +1,87 @@
-# Cisco ISE DevOps Configuration Management
+# Cisco ISE DevOps + Audit Toolkit
 
-This repository provides tools for exporting and importing Cisco ISE configurations in a customer-generic manner. All customer-specific settings are stored in a separate configuration file for easy customization.
+Public collection of **read-only** Cisco ISE helpers used for assessments and
+config management. Credentials are never committed; script output is customer
+data and must stay local.
 
-## Features
+| Area | What |
+|---|---|
+| [`audit/`](audit/) | Assessment pull scripts (PowerShell + OpenAPI policy export) |
+| Root `ise_export.py` / `ise_import.py` | Broader ERS export/import tooling |
 
-- **Export ISE Configurations**: Export policies, endpoints, network devices, identity groups, users, and certificates
-- **Import ISE Configurations**: Import configurations from exported files to target ISE nodes
-- **Customer-Generic Design**: All customer-specific settings in separate configuration file
-- **Compressed Output**: Optional compression of export files
-- **Comprehensive Logging**: Detailed logging of all operations
-- **Multi-Node Support**: Support for primary and secondary ISE nodes
+Start with the [audit workflow](audit/README.md) if you are documenting an
+existing ISE deployment.
+
+## Security rules (read before cloning into a shared tree)
+
+1. **Do not commit exports.** JSON/CSV from these scripts contains policy names,
+   dACLs, identity groups, and sometimes hostnames.
+2. **`customer_config.py` is gitignored.** Copy from `customer_config_example.py`.
+3. **No real customer hostnames or passwords** in examples, comments, or docs.
+4. Run pulls from a directory **outside** the git working tree when possible.
 
 ## Prerequisites
 
-- Python 3.7 or higher
-- Cisco ISE with ERS API access
-- Network connectivity to ISE nodes
+- Python 3.7+
+- Cisco ISE with ERS and/or OpenAPI enabled
+- PowerShell 5.1+ for the `audit/*.ps1` scripts (Windows or PowerShell 7)
 
-## Installation
-
-1. Clone this repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/devnexthop/nexthop-ise-devops.git
 cd nexthop-ise-devops
-```
-
-2. Install Python dependencies:
-```bash
 pip install -r requirements.txt
+cp customer_config_example.py customer_config.py   # edit locally; never commit
 ```
 
-3. Configure customer settings:
+## Audit scripts (quick start)
+
+```powershell
+cd audit
+powershell -ExecutionPolicy Bypass -File .\ers_diag.ps1 -Pan ise-pan.example.com
+powershell -ExecutionPolicy Bypass -File .\pull_ise_objects.ps1 -Pan ise-pan.example.com
+```
+
+```bash
+cd audit
+export ISE_HOST=ise-pan.example.com ISE_USER=apiadmin
+python3 ise_policy_export.py --outdir /tmp/ise_export --insecure
+```
+
+Full explanations: [`audit/README.md`](audit/README.md).
+
+## Config export / import
+
 ```bash
 cp customer_config_example.py customer_config.py
-# Edit customer_config.py with your specific settings
-```
-
-## Configuration
-
-### Customer Configuration File (`customer_config.py`)
-
-The customer configuration file contains all customer-specific settings:
-
-```python
-CUSTOMER_CONFIG = {
-    "ise_nodes": [
-        {
-            "hostname": "ise-primary.yourdomain.com",
-            "ip_address": "10.1.1.10",
-            "username": "admin",
-            "password": "YourSecurePassword123!",
-            "node_type": "primary"
-        }
-    ],
-    "backup_settings": {
-        "backup_directory": "/tmp/ise_backups",
-        "retention_days": 30,
-        "encrypt_backups": True
-    }
-}
-```
-
-### Export Settings
-
-Configure what to export:
-
-```python
-EXPORT_SETTINGS = {
-    "config_types": [
-        "policies",
-        "endpoints", 
-        "certificates",
-        "network_devices",
-        "identity_groups",
-        "users"
-    ],
-    "output_format": "json",
-    "compress_output": True
-}
-```
-
-## Usage
-
-### Export Configurations
-
-Export configurations from all configured ISE nodes:
-
-```bash
+# edit ise_nodes hostnames/credentials locally
 python ise_export.py
+python ise_import.py /path/to/export.json
 ```
 
-The script will:
-1. Connect to each configured ISE node
-2. Export the specified configuration types
-3. Save the export to the backup directory
-4. Optionally compress the output
+See comments in `customer_config_example.py` for knobs (what to export, logging,
+backup directory).
 
-### Import Configurations
+## Repository layout
 
-Import configurations from an export file:
-
-```bash
-python ise_import.py /path/to/export/file.json
-```
-
-Or with compressed file:
-
-```bash
-python ise_import.py /path/to/export/file.zip
-```
-
-The script will:
-1. Load the export file
-2. Connect to each configured ISE node
-3. Import the configurations
-4. Log all operations
-
-## Configuration Types
-
-The following configuration types can be exported/imported:
-
-- **policies**: Authorization and authentication policies
-- **endpoints**: Endpoint configurations
-- **certificates**: Certificate profiles
-- **network_devices**: Network device configurations
-- **identity_groups**: Identity group configurations
-- **users**: Internal user configurations
-
-## File Structure
-
-```
+```text
 nexthop-ise-devops/
-├── customer_config.py              # Customer-specific configuration
-├── customer_config_example.py      # Example configuration file
-├── ise_export.py                   # Export script
-├── ise_import.py                   # Import script
-├── requirements.txt                 # Python dependencies
-└── README.md                       # This file
+├── audit/                      # ISE assessment / documentation pulls
+│   ├── README.md               # workflow + per-script docs
+│   ├── ers_diag.ps1
+│   ├── pull_ise_objects.ps1
+│   ├── pull_policy_meta.ps1
+│   ├── pull_profiling.ps1
+│   ├── fetch_auth_profiles.ps1
+│   ├── resolve_profiling_guids.ps1
+│   ├── ise_policy_export.py
+│   └── examples/
+├── ise_export.py               # multi-node ERS export
+├── ise_import.py               # multi-node ERS import
+├── customer_config_example.py  # template only
+├── requirements.txt
+└── README.md
 ```
-
-## Logging
-
-All operations are logged to:
-- Console output
-- `ise_operations.log` file
-
-Log levels can be configured in the customer configuration file.
-
-## Security Considerations
-
-- **Credentials**: Store credentials securely and consider using environment variables or secret management systems
-- **SSL Certificates**: The scripts disable SSL verification for self-signed certificates. Consider implementing proper certificate validation for production use
-- **Network Access**: Ensure proper network security and access controls
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failures**: Verify credentials and network connectivity
-2. **SSL Errors**: Check certificate validity or disable SSL verification for testing
-3. **Permission Errors**: Ensure the backup directory is writable
-4. **Import Failures**: Check for conflicting configurations and dependencies
-
-### Debug Mode
-
-Enable debug logging by changing the log level in `customer_config.py`:
-
-```python
-LOGGING_CONFIG = {
-    "log_level": "DEBUG",
-    # ... other settings
-}
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the troubleshooting section above
-
+MIT — see [LICENSE](LICENSE).

@@ -10,14 +10,14 @@ CUSTOMER_CONFIG = {
             "hostname": "ise-primary.yourdomain.com",
             "ip_address": "10.1.1.10",
             "username": "admin",
-            "password": "YourSecurePassword123!",
+            "password": "CHANGE_ME",
             "node_type": "primary"
         },
         {
-            "hostname": "ise-secondary.yourdomain.com", 
+            "hostname": "ise-secondary.yourdomain.com",
             "ip_address": "10.1.1.11",
             "username": "admin",
-            "password": "YourSecurePassword123!",
+            "password": "CHANGE_ME",
             "node_type": "secondary"
         }
     ],

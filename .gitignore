@@ -4,3 +4,36 @@ __pycache__/
 .DS_Store
 venv/
 .venv/
+
+# Operational / customer exports — never publish
+*.log
+ise_operations.log
+ise_export/
+ise_backups/
+workdir/
+dacls/
+profiles/
+logicalprofiles/
+*.json
+!package.json
+!tsconfig.json
+authorization.json
+authentication.json
+authorization-profiles.json
+endpointgroups.json
+idstoresequences.json
+networkdevicegroups.json
+dictionaries.json
+cond_*.json
+docdata.json
+profilerprofiles_index.json
+profiles_index.json
+profiling_guid_names.json
+profiling_guids.csv
+profiles_to_fetch.csv
+
+# Local scratch
+*.xlsx
+*.html
+*.csv
+!audit/examples/*.csv
